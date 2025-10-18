@@ -1,0 +1,76 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite / build output
+dist/
+build/
+.out/
+.vite/
+
+# Environment files (local secrets)
+.env
+.env.*.local
+.env.local
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Test coverage and test caches
+coverage/
+.nyc_output/
+jest-*.json
+jest.config.*.js
+.vscode-test/
+
+# Editor / OS
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.tmp
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# Misc caches and caches created by tools
+.cache/
+.cache-loader/
+.eslintcache
+parcel-cache/
+.pnp.*
+.cache/
+*.cache
+
+# Bundler / package manager / lock artifacts (don't ignore lockfiles themselves in most projects)
+# (If you intentionally want to ignore lockfiles, remove the next two lines)
+# package-lock.json
+# yarn.lock
+
+# Build artifacts / generated files
+*.gz
+*.br
+
+# Coverage reports
+coverage/
+lcov-report/
+
+# Optional: Mac / Windows thumbnail and system files
+Icon?
+._*
+
+# Temporary / local files you don't want to commit
+*.local
+*.env.*.local
+
+# If you use Storybook / other dev servers
+storybook-static/
+
+# Other
+dist-ssr/
