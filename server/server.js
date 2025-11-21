@@ -1,11 +1,12 @@
-import express from "express";
+// Load environment variables FIRST before any other imports
 import * as dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import userRouter from "./routes/userRouter.js";
-
-// Load environment variables from the server/.env file
-dotenv.config();
+import resumeRouter from "./routes/resumeRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,12 +17,12 @@ await connectDB();
 app.use(cors());
 app.use(express.json());
 
+// User routes
 app.get("/", (req, res) => {
   res.send("Hello from the server!");
 });
-
-// User routes
 app.use("/api/users", userRouter);
+app.use("/api/resumes", resumeRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

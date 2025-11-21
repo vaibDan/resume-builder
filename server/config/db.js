@@ -7,9 +7,6 @@ const connectDB = async () => {
         let MongoDB_URI = process.env.MONGO_DB_URI;
         const projetName = "resume-builder-cluster";
 
-        console.log("MONGO_DB_URI:", MongoDB_URI ? "Present" : "Missing");
-        console.log("Full URI:", MongoDB_URI ? `${MongoDB_URI}/${projetName}` : "N/A");
-
         if (!MongoDB_URI) {
             throw new Error("MongoDB connection string is not defined in environment variables");
         }
