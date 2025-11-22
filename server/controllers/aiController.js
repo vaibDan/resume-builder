@@ -1,5 +1,5 @@
 
-import ai from "../config/ai";
+import ai from "../config/ai.js";
 import Resume from "../models/Resume.js";
 
 
@@ -148,4 +148,4 @@ export const uploadResume = async (req, res) => {
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
-}
+};
