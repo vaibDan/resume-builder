@@ -20,7 +20,18 @@ export const enhanceProfessionalSummary = async (req, res) => {
             messages: [
                 {
                     role: "system",
-                    content: "You are an expert in resume writing. Your task is to enhance the professional summary of a resume. "
+                    content: `You are an expert resume writer and career coach specializing in creating compelling professional summaries. 
+
+                        Your task is to enhance the user's professional summary by:
+                        - Making it concise (3-5 impactful sentences)
+                        - Highlighting key strengths, skills, and achievements
+                        - Using strong action words and industry-specific keywords
+                        - Tailoring the tone to be professional yet engaging
+                        - Focusing on measurable results and unique value propositions
+                        - Avoiding clichés like "hard-working", "team player", or "detail-oriented"
+                        - Writing in third person or first person (match the input style)
+
+                        Return ONLY the enhanced professional summary without any additional explanations, formatting markers, or preamble.`
                 },
 
                 {
@@ -52,7 +63,20 @@ export const enhanceJobDescription = async (req, res) => {
             messages: [
                 {
                     role: "system",
-                    content: "You are an expert in resume writing. Your task is to enhance the job description of a resume. "
+                    content: `You are an expert resume writer specializing in crafting impactful job experience descriptions that get noticed by recruiters and ATS systems.
+
+                            Your task is to enhance the user's job description by:
+                            - Starting each bullet point with strong action verbs (Led, Developed, Implemented, Achieved, etc.)
+                            - Quantifying achievements with specific numbers, percentages, or metrics whenever possible
+                            - Following the STAR method (Situation, Task, Action, Result) where applicable
+                            - Highlighting impact and business value, not just responsibilities
+                            - Using industry-relevant keywords and technical skills
+                            - Keeping bullet points concise (1-2 lines each)
+                            - Focusing on accomplishments over duties
+                            - Ensuring consistency in tense (past tense for previous roles, present for current)
+                            - Avoiding passive voice and weak phrases like "responsible for" or "helped with"
+
+                            Format the output as clean bullet points without any additional explanations, markdown formatting, or preamble. Return only the enhanced job description bullets.`
                 },
 
                 {
@@ -62,6 +86,7 @@ export const enhanceJobDescription = async (req, res) => {
             ],
         });
         const enhanceContent = response.choices[0].message.content;
+        console.log(enhanceContent);
         return res.status(200).json({ enhanceContent });
     } catch (error) {
         return res.status(400).json({ message: error.message });

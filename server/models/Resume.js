@@ -5,7 +5,10 @@ const resumeSchema = new mongoose.Schema({
     title: { type: String, default: "My Resume" },
     public: { type: Boolean, default: false },
     template: { type: String, default: "classic" },
+    // historical typo used 'ascent_color' in some DB entries — keep for compatibility
     ascent_color: { type: String, default: "#000000" },
+    // correct property name used by client: 'accent_color'
+    accent_color: { type: String, default: "#3B82F6" },
     professional_summary: { type: String, default: "" },
     skills: [{ type: String }],
     personal_info: {
