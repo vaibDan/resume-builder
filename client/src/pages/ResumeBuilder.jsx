@@ -11,9 +11,16 @@ import SkillsForm from '../components/SkillsForm'
 import ResumePreview from '../components/ResumePreview'
 import TemplateSelector from '../components/TemplateSelector'
 import ColorPicker from '../components/ColorPicker'
+import { useSelector } from 'react-redux';
+import api from '../configs/api.js';
+import toast from 'react-hot-toast'
+
 
 const ResumeBuilder = () => {
   const { resumeId } = useParams()
+
+  const { token } = useSelector(state => state.auth)
+
   const [resumeData, setResumeData] = useState({
     _id: '',
     title: '',
@@ -38,10 +45,20 @@ const ResumeBuilder = () => {
   })
 
   const loadExistingResume = async () => {
-    const resume = dummyResumeData.find(resume => resume._id === resumeId)
-    if (resume) {
-      setResumeData(resume)
-      document.title = resume.title
+    try {
+      const { data } = await api.get('/api/resumes/get/' + resumeId,
+        { headers: { Authorization: token } });
+      if (data.resume) {
+        // server previously used `ascent_color` (typo). normalize to `accent_color`
+        const normalized = { ...data.resume };
+        if (!normalized.accent_color && normalized.ascent_color) {
+          normalized.accent_color = normalized.ascent_color;
+        }
+        setResumeData(normalized)
+        document.title = data.resume.title
+      }
+    } catch (error) {
+      console.log(error.message);
     }
   }
 
@@ -105,27 +122,68 @@ const ResumeBuilder = () => {
     loadExistingResume()
   }, [resumeId])
 
-const changeResumeVisibility = async () =>{
-  setResumeData({...resumeData, public: !resumeData.public})
-}
+  const changeResumeVisibility = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('resumeId', resumeId);
+      formData.append('resumeData', JSON.stringify({ public: !resumeData.public }));
+      const { data } = await api.put('/api/resumes/update', formData,
+        { headers: { Authorization: token } });
+      setResumeData({ ...resumeData, public: !resumeData.public })
+      toast.success(data.message);
+    } catch (error) {
+      console.error("Error changing resume visibility:", error);
+    }
+  };
 
-const handleShare = () =>{
-  const frontendUrl = window.location.href.split('/app')[0];
-  const resumeUrl = frontendUrl + "/view/" + resumeId;
+  const handleShare = () => {
+    const frontendUrl = window.location.origin;
+    const resumeUrl = frontendUrl + "/view/" + resumeId;
 
-  if (navigator.share) {
-    navigator.share({
-      url: resumeUrl,
-      text: "Check out my resume!",
-    })
-  } else {
-    alert("Share not supported on this browser")
+    if (navigator.share) {
+      navigator.share({
+        url: resumeUrl,
+        text: "Check out my resume!",
+      })
+    } else {
+      alert("Share not supported on this browser")
+    }
   }
-}
 
-const handleDownload = () =>{
-  window.print();
-}
+  const handleDownload = () => {
+    window.print();
+  };
+
+  const saveResume = async () => {
+    try {
+      // deep-clone resumeData (structuredClone if available, otherwise JSON fallback)
+      let updatedResumeData;
+      try {
+        updatedResumeData = typeof structuredClone === 'function' ? structuredClone(resumeData) : JSON.parse(JSON.stringify(resumeData));
+      } catch (err) {
+        updatedResumeData = JSON.parse(JSON.stringify(resumeData));
+      }
+      // remove image from updatedResumeData before sending to server
+      if (updatedResumeData?.personal_info && typeof resumeData.personal_info.image === 'object') {
+        delete updatedResumeData.personal_info.image;
+      }
+      const formData = new FormData();
+      formData.append('resumeId', resumeId);
+      formData.append('resumeData', JSON.stringify(updatedResumeData));
+      removeBackground && formData.append('removeBackground', 'true');
+      if (typeof resumeData.personal_info.image === 'object') {
+        formData.append('image', resumeData.personal_info.image);
+      }
+
+      const { data } = await api.put('/api/resumes/update', formData,
+        { headers: { Authorization: token } });
+
+      setResumeData(data.resume);
+      toast.success(data.message);
+    } catch (error) {
+      console.error("Error saving resume:", error);
+    }
+  };
 
   return (
     <div className='print:bg-white'>
@@ -185,8 +243,8 @@ const handleDownload = () =>{
                   onClick={() => setActiveSectionIndex((prev) => Math.max(0, prev - 1))}
                   disabled={activeSectionIndex === 0}
                   className={`px-5 py-2 rounded-lg border font-medium transition-colors ${activeSectionIndex === 0
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                 >
                   Previous
@@ -196,8 +254,8 @@ const handleDownload = () =>{
                   onClick={() => setActiveSectionIndex((prev) => Math.min(sections.length - 1, prev + 1))}
                   disabled={activeSectionIndex === sections.length - 1}
                   className={`px-5 py-2 rounded-lg border font-medium transition-colors ${activeSectionIndex === sections.length - 1
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
                     }`}
                 >
                   Next
@@ -250,7 +308,7 @@ const handleDownload = () =>{
 
               </div>
 
-              <button className='mt-6 w-max inline-flex justify-center items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-sm hover:bg-green-600'>
+              <button onClick={() => toast.promise(saveResume(), { loading: 'Saving...', success: 'Saved', error: 'Failed to save' })} className='mt-6 w-max inline-flex justify-center items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-sm hover:bg-green-600'>
                 Save Changes
               </button>
 
@@ -259,24 +317,24 @@ const handleDownload = () =>{
           </div>
 
           {/* Right panel - Preview */}
-                <div className='lg:col-span-7 max-lg:mt-6 print:col-span-12 print:max-lg:mt-0'>
-                <div className='relative w-full'>
-                  <div className='absolute bottom-3 left-0 right-0 flex items-center justify-end gap-2 p-4 print:hidden'>
-                  {resumeData.public && (
-                    <button onClick={handleShare} className='inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg shadow-md hover:from-cyan-600 hover:to-blue-600 transition-all mt-5'>
-                    <Share2Icon className='size-4' /> <span>Share</span> 
-                    </button>
-                  )}
-                  <button onClick={changeResumeVisibility} className='flex items-center p-2 px-4 gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-md hover:from-purple-600 hover:to-indigo-700 transition-all mt-5'>
-                    {resumeData.public ? <EyeIcon className='size-4 text-gray-600' /> : <EyeOffIcon className='size-4 text-gray-600' />}
-                    {resumeData.public ? "Public" : "Private"}
+          <div className='lg:col-span-7 max-lg:mt-6 print:col-span-12 print:max-lg:mt-0'>
+            <div className='relative w-full'>
+              <div className='absolute bottom-3 left-0 right-0 flex items-center justify-end gap-2 p-4 print:hidden'>
+                {resumeData.public && (
+                  <button onClick={handleShare} className='inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg shadow-md hover:from-cyan-600 hover:to-blue-600 transition-all mt-5'>
+                    <Share2Icon className='size-4' /> <span>Share</span>
                   </button>
-                  <button onClick={handleDownload} className='flex items-center p-2 px-4 gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transition-all mt-5'>
-                    <DownloadIcon className='size-4' />
-                    Download
-                  </button>
-                  </div>
-                  {/* ---buttons--- */}
+                )}
+                <button onClick={changeResumeVisibility} className='flex items-center p-2 px-4 gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-md hover:from-purple-600 hover:to-indigo-700 transition-all mt-5'>
+                  {resumeData.public ? <EyeIcon className='size-4 text-gray-600' /> : <EyeOffIcon className='size-4 text-gray-600' />}
+                  {resumeData.public ? "Public" : "Private"}
+                </button>
+                <button onClick={handleDownload} className='flex items-center p-2 px-4 gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transition-all mt-5'>
+                  <DownloadIcon className='size-4' />
+                  Download
+                </button>
+              </div>
+              {/* ---buttons--- */}
             </div>
             {/* --resume preview-- */}
             <ResumePreview data={resumeData} template={resumeData.template} accentColor={resumeData.accent_color} />

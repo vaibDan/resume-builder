@@ -4,22 +4,34 @@ import ResumePreview from '../components/ResumePreview'
 import { dummyResumeData } from '../assets/assets'
 import { ArrowBigLeftIcon, DownloadIcon, EyeIcon, EyeOffIcon, Share2Icon } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import api from '../configs/api'
 
 
 const Preview = () => {
   const { resumeId } = useParams()
   const [resumeData, setResumeData] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const loadResume = async () => {
+    try {
+      const { data } = await api.get('/api/resumes/public/' + resumeId)
+      setResumeData(data.resume)
+    } catch (error) {
+      console.log(error.message)
+    }
+    finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const resume = dummyResumeData.find(r => r._id === resumeId)
-    if (resume) {
-      setResumeData(resume)
-      document.title = resume.title
-    }
+    // 
+    loadResume() 
   }, [resumeId])
 
   const handleShare = () => {
-    const frontendUrl = window.location.href.split('/app')[0]
+    // Use origin so share links don't accidentally duplicate paths
+    const frontendUrl = window.location.origin
     const resumeUrl = frontendUrl + '/view/' + resumeId
     if (navigator.share) {
       navigator.share({ url: resumeUrl, text: 'Check out my resume!' })
@@ -36,6 +48,17 @@ const Preview = () => {
 
   const handleDownload = () => {
     window.print()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <div className="text-center p-6 bg-white rounded-lg shadow">
+          <div className="animate-spin border-4 border-blue-500 border-t-transparent rounded-full w-10 h-10 mx-auto mb-3" />
+          <div className="text-sm text-gray-600">Loading resume preview…</div>
+        </div>
+      </div>
+    )
   }
 
   if (!resumeData) {
@@ -82,7 +105,8 @@ const Preview = () => {
       </div>
 
       <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
-        <ResumePreview data={resumeData} template={resumeData.template} accentColor={resumeData.accent_color} />
+        {/* handle server/client key name mismatch for accent color */}
+        <ResumePreview data={resumeData} template={resumeData.template} accentColor={resumeData.accent_color || resumeData.ascent_color} />
       </div>
     </div>
   )

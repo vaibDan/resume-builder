@@ -42,6 +42,8 @@ const App = () => {
     <>
       <Toaster />
       <Routes>
+        {/* Public preview route (works at /view/:resumeId) so share links without /app render correctly */}
+        <Route path='/view/:resumeId' element={<Preview />} />
         <Route path='/' element={<Home />} />
         <Route path='/app' element={<Layout />}>
           <Route index element={<Dashboard />} />
