@@ -1,12 +1,17 @@
-import { PlusIcon, Sparkles, Trash2, Edit2 } from 'lucide-react'
+import { PlusIcon, Sparkles, Trash2, Edit2, Loader2 } from 'lucide-react'
 import React, { useState } from 'react'
+import toast from 'react-hot-toast';
+import { useSelector } from 'react-redux'
+import api from '../configs/api';
 
 const ExperienceForm = ({ data = [], onChange }) => {
+  const { token } = useSelector((state) => state.auth);
   const [editingIndex, setEditingIndex] = useState(-1)
+  const [generatingIndex, setGeneratingIndex] = useState(-1);
 
   const addExperience = () => {
     const newExperience = {
-      job_title: '',
+      position: '',
       company: '',
       start_date: '',
       end_date: '',
@@ -40,10 +45,35 @@ const ExperienceForm = ({ data = [], onChange }) => {
     setEditingIndex(editingIndex === index ? -1 : index)
   }
 
-  const aiEnhance = () => {
-    // Placeholder for AI enhancement functionality
-    console.log('AI Enhance clicked for experience section')
-  }
+  // const aiEnhance = () => {
+  //   // Placeholder for AI enhancement functionality
+  //   console.log('AI Enhance clicked for experience section')
+  // }
+
+  const generatingDescription = async (index) => {
+    // mark which entry is being enhanced (spinner uses this)
+    setGeneratingIndex(index);
+    // Ensure editor is open while enhancement runs
+    setEditingIndex(index);
+    const experience = data[index];
+    // Use the client-side field names (position) when building the prompt
+    const prompt = `Enhance this job description ${experience.description} for the
+    position of ${experience.position} at ${experience.company}.`
+
+    try {
+      const { data } = await api.post('/api/ai/enhance-job-desc',
+        { userContent: prompt },
+        { headers: { Authorization: token } });
+      updateExperience(index, 'description', data.enhanceContent
+      )
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message)
+    }
+    finally {
+      // clear only the generating flag (keep editing open if needed)
+      setGeneratingIndex(-1);
+    }
+  };
 
   return (
     <div className='space-y-6'>
@@ -85,11 +115,11 @@ const ExperienceForm = ({ data = [], onChange }) => {
                     <div className='space-y-3'>
                       <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
                         <div>
-                          <label className='block text-sm font-medium text-gray-700 mb-1'>Job Title</label>
+                          <label className='block text-sm font-medium text-gray-700 mb-1'>Position</label>
                           <input
                             type='text'
-                            value={experience.job_title}
-                            onChange={(e) => updateExperience(index, 'job_title', e.target.value)}
+                            value={experience.position}
+                            onChange={(e) => updateExperience(index, 'position', e.target.value)}
                             className='w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none'
                             placeholder='e.g. Software Engineer'
                           />
@@ -143,11 +173,16 @@ const ExperienceForm = ({ data = [], onChange }) => {
                       </div>
                       <div className='flex space-y'>
                         <button
-                          onClick={aiEnhance}
+                          onClick={() => generatingDescription(index)}
+                          disabled={generatingIndex === index || !experience.position || !experience.company}
                           className='flex items-center gap-2 rounded-md bg-purple-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-purple-700'
                         >
-                          <Sparkles className='size-4' />
-                          AI Enhance
+                          {generatingIndex === index ? (
+                            <Loader2 className='size-4 animate-spin' />
+                          ) : (
+                              <Sparkles className='size-4' />
+                          )}
+                          AI Enhance 
                         </button>
                       </div>
                       <div>
@@ -163,7 +198,7 @@ const ExperienceForm = ({ data = [], onChange }) => {
                     </div>
                   ) : (
                     <div>
-                      <h4 className='font-semibold text-gray-900'>{experience.job_title || 'Job Title'}</h4>
+                        <h4 className='font-semibold text-gray-900'>{experience.position || 'Position'}</h4>
                       <p className='text-gray-600'>{experience.company || 'Company Name'}</p>
                       <p className='text-sm text-gray-500'>
                         {experience.start_date || 'Start Date'} - {experience.current ? 'Present' : (experience.end_date || 'End Date')}

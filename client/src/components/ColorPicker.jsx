@@ -10,7 +10,7 @@ const ColorPicker = ({ selectedColor, onChange }) => {
         { name: 'Yellow', value: '#f59e0b' },
         { name: 'Purple', value: '#8b5cf6' },
         { name: 'Gray', value: '#6b7280' },
-        {name: 'Black', value: '#000000'},
+      { name: 'Charcoal', value: '#36454F' },
     ]
     const [isOpen, setIsOpen] = React.useState(false);
     
