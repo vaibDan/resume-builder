@@ -1,8 +1,32 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Upload, User, Mail, Phone, MapPin, Linkedin, Globe, Briefcase } from 'lucide-react'
+import { useForm } from 'react-hook-form'
 
 const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackground }) => {
   const fileInputRef = useRef(null)
+
+  // Initialize React Hook Form
+  const {
+    register,
+    watch,
+    formState: { errors }
+  } = useForm({
+    defaultValues: data,
+    mode: 'onChange' // Validate on change
+  })
+
+  // Watch only the fields managed by React Hook Form
+  const fullName = watch('full_name')
+  const email = watch('email')
+
+  useEffect(() => {
+    // Only update the fields managed by React Hook Form
+    onChange({
+      ...data,
+      full_name: fullName,
+      email: email
+    })
+  }, [fullName, email])
 
   const handleInputChange = (field, value) => {
     onChange({
@@ -100,12 +124,20 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
           </label>
           <input
             type="text"
-            value={data.full_name || ''}
-            onChange={(e) => handleInputChange('full_name', e.target.value)}
-            className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors'
+            {...register("full_name", {
+              required: "Full name is required",
+              minLength: {
+                value: 2,
+                message: "Name must be at least 2 characters"
+              }
+            })}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${errors.full_name ? 'border-red-500' : 'border-gray-300'
+              }`}
             placeholder="Enter your full name"
-            required
           />
+          {errors.full_name && (
+            <span className='text-sm text-red-500'>{errors.full_name.message}</span>
+          )}
         </div>
 
         {/* Email */}
@@ -116,12 +148,20 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
           </label>
           <input
             type="email"
-            value={data.email || ''}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors'
+            {...register("email", {
+              required: "Email is required",
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "Invalid email address"
+              }
+            })}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
             placeholder="your.email@example.com"
-            required
           />
+          {errors.email && (
+            <span className='text-sm text-red-500'>{errors.email.message}</span>
+          )}
         </div>
 
         {/* Phone */}
@@ -135,7 +175,7 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
             value={data.phone || ''}
             onChange={(e) => handleInputChange('phone', e.target.value)}
             className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors'
-            placeholder="+1 (555) 123-4567"
+            placeholder="+91 1234567890"
           />
         </div>
 
@@ -158,7 +198,7 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
         <div className='space-y-2'>
           <label className='block text-sm font-medium text-gray-700'>
             <Briefcase className='w-4 h-4 inline mr-2' />
-            Profession *
+            Profession 
           </label>
           <input
             type="text"
