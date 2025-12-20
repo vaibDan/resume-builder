@@ -6,7 +6,7 @@ const ProjectForm = ({ data = [], onChange }) => {
   
     const addProject = () => {
       const newProject = {
-        project_name: '',
+        name: '',
         type: '',
         description: '',
         link: ''
@@ -80,8 +80,8 @@ const ProjectForm = ({ data = [], onChange }) => {
                           <label className='block text-sm font-medium text-gray-700 mb-1'>Project Name</label>
                           <input
                             type='text'
-                            value={project.project_name}
-                            onChange={(e) => updateProject(index, 'project_name', e.target.value)}
+                            value={project.name}
+                            onChange={(e) => updateProject(index, 'name', e.target.value)}
                             className='w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none'
                             placeholder='e.g. Resume Builder App'
                           />
@@ -123,7 +123,7 @@ const ProjectForm = ({ data = [], onChange }) => {
                     </div>
                   ) : (
                     <div>
-                      <h4 className='font-semibold text-gray-900'>{project.project_name || 'Project Name'}</h4>
+                        <h4 className='font-semibold text-gray-900'>{project.name || 'Project Name'}</h4>
                       <p className='text-gray-600'>{project.type || 'Type'}</p>
                       <p className='text-sm text-gray-500'>
                         {project.link && (

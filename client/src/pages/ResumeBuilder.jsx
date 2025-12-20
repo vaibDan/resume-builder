@@ -37,7 +37,7 @@ const ResumeBuilder = () => {
     professional_summary: "",
     experience: [],
     education: [],
-    project: [],
+    projects: [],
     skills: [],
     template: "classic",
     accent_color: "#3B82F6",
@@ -53,6 +53,30 @@ const ResumeBuilder = () => {
         const normalized = { ...data.resume };
         if (!normalized.accent_color && normalized.ascent_color) {
           normalized.accent_color = normalized.ascent_color;
+        }
+        // normalize experience field: convert 'current' to 'is_current' for backward compatibility
+        if (normalized.experience && Array.isArray(normalized.experience)) {
+          normalized.experience = normalized.experience.map(exp => {
+            if (exp.current !== undefined && exp.is_current === undefined) {
+              const { current, ...rest } = exp;
+              return { ...rest, is_current: current };
+            }
+            return exp;
+          });
+        }
+        // normalize projects field: convert 'project_name' to 'name' for backward compatibility
+        if (normalized.projects && Array.isArray(normalized.projects)) {
+          normalized.projects = normalized.projects.map(proj => {
+            if (proj.project_name !== undefined && proj.name === undefined) {
+              const { project_name, ...rest } = proj;
+              return { ...rest, name: project_name };
+            }
+            return proj;
+          });
+        }
+        // Remove legacy 'project' field if it exists
+        if (normalized.project !== undefined) {
+          delete normalized.project;
         }
         setResumeData(normalized)
         document.title = data.resume.title
@@ -107,7 +131,7 @@ const ResumeBuilder = () => {
   const handleProjectChange = (updatedProject) => {
     setResumeData(prev => ({
       ...prev,
-      project: updatedProject
+      projects: updatedProject
     }))
   }
 
@@ -295,7 +319,7 @@ const ResumeBuilder = () => {
                 )}
                 {activeSection.id === 'projects' && (
                   <ProjectForm
-                    data={resumeData.project}
+                    data={resumeData.projects}
                     onChange={handleProjectChange}
                   />
                 )}
