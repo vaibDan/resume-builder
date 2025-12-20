@@ -219,10 +219,15 @@ export const updateResume = async (req, res) => {
         }
 
         // Flatten nested resumeDataCopy into dot-notation so nested fields are updated correctly
+        // Arrays are NOT flattened - they are set directly to ensure MongoDB replaces the entire array
         const flatten = (obj, parentKey = '', res = {}) => {
             for (const [k, v] of Object.entries(obj || {})) {
                 const key = parentKey ? `${parentKey}.${k}` : k;
-                if (v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date) && !(v instanceof Buffer)) {
+                // If it's an array, set it directly without flattening
+                if (Array.isArray(v)) {
+                    res[key] = v;
+                } else if (v && typeof v === 'object' && !(v instanceof Date) && !(v instanceof Buffer)) {
+                // Only flatten non-array objects
                     flatten(v, key, res);
                 } else {
                     res[key] = v;

@@ -9,6 +9,7 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
   const {
     register,
     watch,
+    reset,
     formState: { errors }
   } = useForm({
     defaultValues: data,
@@ -18,6 +19,11 @@ const PersonalInfoForm = ({ data, onChange, removeBackground, setRemoveBackgroun
   // Watch only the fields managed by React Hook Form
   const fullName = watch('full_name')
   const email = watch('email')
+
+  // Reset form when data changes (e.g., when loaded from database)
+  useEffect(() => {
+    reset(data)
+  }, [data, reset])
 
   useEffect(() => {
     // Only update the fields managed by React Hook Form

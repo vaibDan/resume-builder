@@ -68,16 +68,16 @@ const MinimalTemplate = ({ data, accentColor }) => {
             )}
 
             {/* Projects */}
-            {data.project && data.project.length > 0 && (
+            {data.projects && data.projects.length > 0 && (
                 <section className="mb-10">
                     <h2 className="text-sm uppercase tracking-widest mb-6 font-medium" style={{ color: accentColor }}>
                         Projects
                     </h2>
 
                     <div className="space-y-4">
-                        {data.project.map((proj, index) => (
+                        {data.projects.map((proj, index) => (
                             <div key={index} className="flex flex-col gap-2 justify-between items-baseline">
-                                <h3 className="text-lg font-medium ">{proj.project_name}</h3>
+                                <h3 className="text-lg font-medium ">{proj.name}</h3>
                                 {proj.type && <p className="text-sm" style={{ color: accentColor }}>{proj.type}</p>}
                                 {proj.link && (
                                     <a href={proj.link} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all text-sm ">

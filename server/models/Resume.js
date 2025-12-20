@@ -30,7 +30,7 @@ const resumeSchema = new mongoose.Schema({
         description: { type: String},         
         is_current: { type: Boolean, default: false},         
     }],
-     projects: [{
+    projects: [{
         name: { type: String},
         type: { type: String},          
         description: { type: String},

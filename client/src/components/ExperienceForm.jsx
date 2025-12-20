@@ -15,7 +15,7 @@ const ExperienceForm = ({ data = [], onChange }) => {
       company: '',
       start_date: '',
       end_date: '',
-      current: false,
+      is_current: false,
       description: ''
     }
     onChange([...data, newExperience])
@@ -153,7 +153,7 @@ const ExperienceForm = ({ data = [], onChange }) => {
                               type='month'
                               value={experience.end_date}
                               onChange={(e) => updateExperience(index, 'end_date', e.target.value)}
-                              disabled={experience.current}
+                              disabled={experience.is_current}
                               className='w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none disabled:bg-gray-100'
                             />
                           </div>
@@ -163,8 +163,8 @@ const ExperienceForm = ({ data = [], onChange }) => {
                         <input
                           type='checkbox'
                           id={`current-${index}`}
-                          checked={experience.current}
-                          onChange={(e) => updateExperience(index, 'current', e.target.checked)}
+                          checked={experience.is_current}
+                          onChange={(e) => updateExperience(index, 'is_current', e.target.checked)}
                           className='rounded border-gray-300'
                         />
                         <label htmlFor={`current-${index}`} className='text-sm text-gray-700'>
@@ -201,7 +201,7 @@ const ExperienceForm = ({ data = [], onChange }) => {
                         <h4 className='font-semibold text-gray-900'>{experience.position || 'Position'}</h4>
                       <p className='text-gray-600'>{experience.company || 'Company Name'}</p>
                       <p className='text-sm text-gray-500'>
-                        {experience.start_date || 'Start Date'} - {experience.current ? 'Present' : (experience.end_date || 'End Date')}
+                          {experience.start_date || 'Start Date'} - {experience.is_current ? 'Present' : (experience.end_date || 'End Date')}
                         {experience.location && ` • ${experience.location}`}
                       </p>
                       {experience.description && (
