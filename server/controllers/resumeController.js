@@ -123,14 +123,14 @@ export const updateResume = async (req, res) => {
         } else {
             resumeDataCopy = structuredClone(resumeData);
         };
-        console.log(resumeDataCopy);
+        // console.log(resumeDataCopy);
 
         // Debug: Check if base64 image is present
-        console.log('[updateResume] Checking for base64 image:', resumeDataCopy.personal_info?.image?.startsWith('data:image/'));
+        // console.log('[updateResume] Checking for base64 image:', resumeDataCopy.personal_info?.image?.startsWith('data:image/'));
 
         if (image) {
             const imageBufferData = fs.createReadStream(image.path);
-            console.log('[updateResume] image file received:', image.originalname);
+            // console.log('[updateResume] image file received:', image.originalname);
             // upload image to imagekit
             const response = await imagekit.files.upload({
                 file: imageBufferData,
@@ -144,7 +144,7 @@ export const updateResume = async (req, res) => {
             resumeDataCopy.personal_info = resumeDataCopy.personal_info || {};
             resumeDataCopy.personal_info.image = response.url;
         } else if (resumeDataCopy.personal_info?.image?.startsWith('data:image/')) {
-            console.log('[updateResume] Base64 image detected, uploading to ImageKit...');
+            // console.log('[updateResume] Base64 image detected, uploading to ImageKit...');
             try {
                 // Try uploading the full data URI first (some SDKs accept data URI directly)
                 const dataUri = resumeDataCopy.personal_info.image;
@@ -163,7 +163,7 @@ export const updateResume = async (req, res) => {
                     });
                 } catch (firstErr) {
                     // If the SDK rejected the data URI, fall back to base64-only upload
-                    console.warn('[updateResume] data URI upload failed, will try base64-only fallback:', firstErr.message);
+                    // console.warn('[updateResume] data URI upload failed, will try base64-only fallback:', firstErr.message);
                     const base64Data = dataUri.split(',')[1];
 
                     // Some SDKs accept Buffer; some expect base64 string - try both if needed
@@ -179,7 +179,7 @@ export const updateResume = async (req, res) => {
                             }
                         });
                     } catch (secondErr) {
-                        console.warn('[updateResume] base64 string upload failed, will try Buffer fallback:', secondErr.message);
+                        // console.warn('[updateResume] base64 string upload failed, will try Buffer fallback:', secondErr.message);
                         // Last fallback: Buffer
                         const buffer = Buffer.from(base64Data, 'base64');
                         response = await imagekit.files.upload({
@@ -194,7 +194,7 @@ export const updateResume = async (req, res) => {
                     }
                 }
 
-                console.log('[updateResume] ImageKit upload response:', response?.url || response);
+                // console.log('[updateResume] ImageKit upload response:', response?.url || response);
                 if (!response?.url) {
                     throw new Error('ImageKit returned an unexpected upload response');
                 }
@@ -202,13 +202,13 @@ export const updateResume = async (req, res) => {
                 resumeDataCopy.personal_info.image = response.url;
 
             } catch (uploadError) {
-                console.error('[updateResume] ImageKit upload failed:', uploadError?.message || uploadError);
+                // console.error('[updateResume] ImageKit upload failed:', uploadError?.message || uploadError);
                 // If upload fails we should not silently keep the base64 string in the DB.
                 // Return a 500 error so client can react (and optionally try again with a proper ImageKit config).
                 return res.status(500).json({ message: 'Failed to upload image to ImageKit. Please check server ImageKit configuration and try again.' });
             }
         } else {
-            console.log('[updateResume] No image file or base64 detected');
+            // console.log('[updateResume] No image file or base64 detected');
         }
 
         // Normalize accent / ascent color keys for compatibility
@@ -248,7 +248,7 @@ export const updateResume = async (req, res) => {
             // console.log('[updateResume] removed updatedAt from $set object');
         }
 
-        console.log('[updateResume] $set object:', setObj);
+        // console.log('[updateResume] $set object:', setObj);
 
         const updatedResume = await Resume.findOneAndUpdate(
             { userId, _id: resumeId },
