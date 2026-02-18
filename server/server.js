@@ -15,7 +15,10 @@ const PORT = process.env.PORT || 3000;
 // Database connection
 await connectDB();
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost", "http://localhost:80", "http://localhost:3000", "http://127.0.0.1", "http://localhost:5173"],
+  credentials: true
+}));
 app.use(express.json());
 
 // User routes
