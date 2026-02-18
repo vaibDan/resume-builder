@@ -1,0 +1,89 @@
+services:
+  # # MongoDB Database
+  # mongodb:
+  #   image: mongo:latest
+  #   container_name: resume-mongodb
+  #   restart: unless-stopped
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+  #     MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password}
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #     - mongodb_config:/data/configdb
+  #   networks:
+  #     - resume-network
+
+  # Backend Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: resume-server
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGO_DB_URI=${MONGO_DB_URI}
+      # - MONGO_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-password}@mongodb:27017/resume-builder?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - IMAGEKIT_PUBLIC_KEY=${IMAGEKIT_PUBLIC_KEY}
+      - IMAGEKIT_PRIVATE_KEY=${IMAGEKIT_PRIVATE_KEY}
+      - IMAGEKIT_URL_ENDPOINT=${IMAGEKIT_URL_ENDPOINT}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    # depends_on:
+    #   - mongodb
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    networks:
+      - resume-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Client
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: resume-client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    environment:
+      - VITE_BASE_URL=/api
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    networks:
+      - resume-network
+
+# # Ngrok for exposing the backend server to the internet
+#   ngrok:
+#     image: ngrok/ngrok:latest
+#     container_name: ngrok
+#     restart: unless-stopped
+#     command: "http resume-client:80"
+#     environment:
+#       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+#     ports:
+#       - "4040:4040"
+#     networks:
+#       - resume-network
+
+# volumes:
+#   mongodb_data:
+#   mongodb_config:
+
+networks:
+  resume-network:
+    driver: bridge
