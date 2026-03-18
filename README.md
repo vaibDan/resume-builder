@@ -14,6 +14,58 @@ A full-stack web application that helps users create professional resumes with m
 - **Real-time Preview**: See your resume changes in real-time
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 
+## 🏗️ Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph Client["Frontend - React Client"]
+        UI["🎨 UI Components<br/>Forms, Templates,<br/>Dashboard"]
+        Redux["📦 Redux Store<br/>Auth State<br/>Resume State"]
+        Router["🛣️ React Router<br/>Dashboard<br/>Builder<br/>Preview"]
+    end
+    
+    subgraph API["API Gateway"]
+        Axios["📡 Axios Client"]
+    end
+    
+    subgraph Server["Backend - Express Server"]
+        Auth["🔐 Auth Controller<br/>Register<br/>Login<br/>JWT Verify"]
+        Resume["📄 Resume Controller<br/>CRUD Operations<br/>Resume Management"]
+        AI["🤖 AI Controller<br/>Content Suggestions<br/>Professional Text"]
+        Middleware["⚙️ Middleware<br/>Auth Guard<br/>Validation<br/>Error Handler"]
+    end
+    
+    subgraph Services["External Services"]
+        OpenAI["🧠 OpenAI API<br/>Text Suggestions<br/>Content Enhancement"]
+        ImageKit["🖼️ ImageKit<br/>Image Upload<br/>Image Hosting"]
+    end
+    
+    subgraph Database["Database Layer"]
+        MongoDB["💾 MongoDB<br/>User Collection<br/>Resume Collection"]
+    end
+    
+    Client -->|HTTP/REST| API
+    API -->|Route Requests| Server
+    Server -->|Process Requests| Middleware
+    Middleware -->|Authenticate| Auth
+    Middleware -->|Validate| Resume
+    Middleware -->|Process| AI
+    Auth -->|Query/Update| MongoDB
+    Resume -->|Query/Update| MongoDB
+    AI -->|API Call| OpenAI
+    Resume -->|Upload/Store| ImageKit
+    
+    UI -->|Dispatch Actions| Redux
+    Redux -->|State Updates| UI
+    Router -->|Navigate| UI
+    
+    style Client fill:#e1f5ff
+    style Server fill:#fff3e0
+    style Database fill:#f3e5f5
+    style Services fill:#e8f5e9
+    style API fill:#fce4ec
+```
+
 ## 🛠️ Tech Stack
 
 ### Frontend
