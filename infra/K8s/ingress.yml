@@ -1,0 +1,44 @@
+# ---------------------------------------------------------------
+# ALB Ingress — replaces kind NodePort exposure
+# Requires AWS Load Balancer Controller (installed via Terraform)
+# ---------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: resume-builder-ingress
+  namespace: resume-builder
+  annotations:
+    # kubernetes.io/ingress.class: nginx #use this for kind cluster with nginx ingress controller
+    # Tells ALB controller to create an internet-facing ALB
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+
+    # # Health check for the frontend
+    # alb.ingress.kubernetes.io/healthcheck-path: /
+    # alb.ingress.kubernetes.io/healthcheck-interval-seconds: "30"
+
+    # Optional: enable HTTPS (uncomment + add your ACM cert ARN)
+    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:<ACCOUNT_ID>:certificate/<CERT_ID>
+    # alb.ingress.kubernetes.io/ssl-redirect: "443"
+spec:
+  rules:
+    - http:
+        paths:
+          # Everything else goes to frontend
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: resume-client
+                port:
+                  number: 80
+          # All /api/* traffic goes to backend
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: resume-server
+                port:
+                  number: 3000

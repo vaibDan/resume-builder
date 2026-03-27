@@ -1,0 +1,144 @@
+name: Build & Deploy to EKS
+
+on:
+  push:
+    branches: [Main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: resume-builder
+
+jobs:
+  # ----------------------------------------------------------------
+  # Build & Push Frontend image to ECR
+  # ----------------------------------------------------------------
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag & push frontend image
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE=$ECR_REGISTRY/resume-builder/frontend:$IMAGE_TAG
+          docker build -t $IMAGE ./client
+          docker push $IMAGE
+          # Also tag as latest
+          docker tag $IMAGE $ECR_REGISTRY/resume-builder/frontend:latest
+          docker push $ECR_REGISTRY/resume-builder/frontend:latest
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+  # ----------------------------------------------------------------
+  # Build & Push Backend image to ECR
+  # ----------------------------------------------------------------
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag & push backend image
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE=$ECR_REGISTRY/resume-builder/backend:$IMAGE_TAG
+          docker build -t $IMAGE ./server
+          docker push $IMAGE
+          docker tag $IMAGE $ECR_REGISTRY/resume-builder/backend:latest
+          docker push $ECR_REGISTRY/resume-builder/backend:latest
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+  # ----------------------------------------------------------------
+  # Deploy to EKS
+  # ----------------------------------------------------------------
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
+
+      - name: Deploy manifests
+        env:
+          FRONTEND_IMAGE: ${{ needs.build-frontend.outputs.image }}
+          BACKEND_IMAGE: ${{ needs.build-backend.outputs.image }}
+        run: |
+          kubectl apply -f k8s/namespace.yml
+          kubectl apply -f k8s/configmap.yml
+          kubectl apply -f k8s/secrets.yml
+          kubectl apply -f k8s/server.yml
+          kubectl apply -f k8s/client.yml
+          kubectl apply -f k8s/ingress.yml
+          kubectl apply -f k8s/hpa.yml
+
+          # Update images to the exact SHA-tagged version
+          kubectl set image deployment/backend \
+            backend=$BACKEND_IMAGE \
+            -n resume-builder
+
+          kubectl set image deployment/frontend \
+            frontend=$FRONTEND_IMAGE \
+            -n resume-builder
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/backend -n resume-builder --timeout=120s
+          kubectl rollout status deployment/frontend -n resume-builder --timeout=120s
+
+      - name: Print ALB URL
+        run: |
+          echo "ALB URL (may take 2-3 min to provision):"
+          kubectl get ingress resume-builder-ingress -n resume-builder \
+            -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'

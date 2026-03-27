@@ -1,0 +1,68 @@
+# ---------------------------------------------------------------
+# Backend — Express / Node.js
+# Replace <AWS_ACCOUNT_ID> with your actual account ID
+# ---------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resume-server
+  namespace: resume-builder
+  labels:
+    app: resume-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: resume-server
+  template:
+    metadata:
+      labels:
+        app: resume-server
+    spec:
+      containers:
+        - name: resume-server
+          # Updated from kind local image → ECR
+          image: 476114113057.dkr.ecr.us-east-1.amazonaws.com/resume-builder/backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: resume-builder-config
+            - secretRef:
+                name: resume-builder-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+---
+# ClusterIP — backend is internal only; ALB talks to frontend,
+# frontend calls backend via this service name inside the cluster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: resume-server
+  namespace: resume-builder
+spec:
+  selector:
+    app: resume-server
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP

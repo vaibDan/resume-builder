@@ -1,0 +1,28 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: resume-builder
+  region: us-east-1
+  version: "1.35"
+
+vpc:
+  cidr: 10.0.0.0/16
+  nat:
+    gateway: Single    # Single = 1 NAT GW (cost saving) | HighlyAvailable = 1 per AZ
+
+
+managedNodeGroups:
+  - name: main
+    instanceType: t3.medium
+    minSize: 1
+    maxSize: 3
+    desiredCapacity: 2
+    privateNetworking: true #puts nodes in private subnets and creates NAT gateway for outbound internet access
+    volumeSize: 20
+    ssh:
+      allow: true
+      publicKeyName: resume-builder-key
+
+iam:
+  withOIDC: true   # needed for ALB controller
