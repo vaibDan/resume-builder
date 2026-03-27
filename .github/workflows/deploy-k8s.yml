@@ -1,0 +1,91 @@
+name: Deploy K8s Manifests
+
+on:
+  push:
+    branches: [Main]
+    paths:
+      - 'infra/k8s/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: resume-builder
+
+jobs:
+  deploy:
+    name: Apply K8s Manifests to EKS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
+
+      - name: Detect changed manifests
+        id: changes
+        run: |
+          # Get list of changed k8s files in this push
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
+            -- 'infra/k8s/**' | tr '\n' ' ')
+          echo "Changed files: $CHANGED"
+          echo "files=$CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Apply namespace (always first)
+        run: kubectl apply -f infra/k8s/namespace.yml
+
+      - name: Apply configmap
+        run: kubectl apply -f infra/k8s/configmap.yml
+
+      - name: Apply secrets (skip if using AWS Secrets Manager)
+        # Comment out this step if you've migrated to AWS Secrets Manager
+        run: kubectl apply -f infra/k8s/secrets.yml
+
+      - name: Apply secret provider class (AWS Secrets Manager)
+        # Uncomment when AWS Secrets Manager is set up
+        # run: kubectl apply -f infra/k8s/secret-provider.yml
+        run: echo "Skipping secret-provider.yml - uncomment when AWS Secrets Manager is configured"
+
+      - name: Apply deployments and services
+        run: |
+          kubectl apply -f infra/k8s/server.yml
+          kubectl apply -f infra/k8s/client.yml
+
+      - name: Apply ingress
+        run: kubectl apply -f infra/k8s/ingress.yml
+
+      - name: Apply HPA
+        run: kubectl apply -f infra/k8s/hpa.yml
+
+      - name: Wait for rollouts
+        run: |
+          kubectl rollout status deployment/resume-server \
+            -n resume-builder --timeout=120s
+          kubectl rollout status deployment/resume-client \
+            -n resume-builder --timeout=120s
+
+      - name: Print cluster state
+        run: |
+          echo "=== Pods ===" && kubectl get pods -n resume-builder
+          echo "=== Services ===" && kubectl get svc -n resume-builder
+          echo "=== Ingress ===" && kubectl get ingress -n resume-builder
+          echo "=== HPA ===" && kubectl get hpa -n resume-builder
+
+      - name: Summary
+        run: |
+          echo "### K8s manifests applied" >> $GITHUB_STEP_SUMMARY
+          ALB=$(kubectl get ingress resume-builder-ingress \
+            -n resume-builder \
+            -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "ALB URL: http://$ALB" >> $GITHUB_STEP_SUMMARY
