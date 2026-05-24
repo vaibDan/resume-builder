@@ -77,3 +77,9 @@ dist-ssr/
 
 #k8s manifests
 secrets.yaml 
+
+# terraform state files
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup

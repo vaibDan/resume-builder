@@ -1,0 +1,101 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [Main]
+    paths:
+      - 'apps/frontend/**'
+  workflow_dispatch:   # allow manual trigger
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: resume-builder
+  ECR_REPO: resume-builder/frontend
+
+jobs:
+  build-and-push:
+    name: Build & Push Frontend to ECR
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag & push image
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+
+          docker build \
+            --build-arg VITE_BASE_URL=/ \
+            -t $IMAGE \
+            ./apps/frontend
+
+          docker push $IMAGE
+
+          docker tag $IMAGE $ECR_REGISTRY/$ECR_REPO:latest
+          docker push $ECR_REGISTRY/$ECR_REPO:latest
+
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Summary
+        run: echo "### Frontend image pushed ${{ steps.build.outputs.image }}" >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    name: Deploy Frontend to EKS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
+
+      - name: Update frontend deployment image
+        env:
+          IMAGE: ${{ needs.build-and-push.outputs.image }}
+        run: |
+          kubectl set image deployment/resume-client \
+            frontend=$IMAGE \
+            -n resume-builder
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/resume-client \
+            -n resume-builder \
+            --timeout=120s
+
+      - name: Summary
+        run: |
+          echo "### Frontend deployed to EKS" >> $GITHUB_STEP_SUMMARY
+          echo "Image: ${{ needs.build-and-push.outputs.image }}" >> $GITHUB_STEP_SUMMARY
+          ALB=$(kubectl get ingress resume-builder-ingress -n resume-builder -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "URL: http://$ALB" >> $GITHUB_STEP_SUMMARY
