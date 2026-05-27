@@ -84,7 +84,7 @@ jobs:
           IMAGE: ${{ needs.build-and-push.outputs.image }}
         run: |
           kubectl set image deployment/resume-client \
-            frontend=$IMAGE \
+            resume-client=$IMAGE \
             -n resume-builder
 
       - name: Wait for rollout

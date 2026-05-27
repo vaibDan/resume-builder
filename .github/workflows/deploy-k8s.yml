@@ -71,9 +71,9 @@ jobs:
       - name: Wait for rollouts
         run: |
           kubectl rollout status deployment/resume-server \
-            -n resume-builder --timeout=120s
+            -n resume-builder --timeout=300s
           kubectl rollout status deployment/resume-client \
-            -n resume-builder --timeout=120s
+            -n resume-builder --timeout=300s
 
       - name: Print cluster state
         run: |
