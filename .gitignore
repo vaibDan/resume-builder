@@ -76,6 +76,7 @@ storybook-static/
 dist-ssr/
 
 #k8s manifests
+<<<<<<< Updated upstream
 secrets.yaml 
 
 # terraform state files
@@ -86,3 +87,6 @@ secrets.yaml
 
 #act_secrets
 .secrets/
+=======
+secrets.yaml 
+>>>>>>> Stashed changes
