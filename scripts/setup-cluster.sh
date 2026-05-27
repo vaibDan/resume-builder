@@ -1,7 +1,4 @@
 #!/bin/bash
-# ---------------------------------------------------------------
-# Run this every time after terraform apply creates a new cluster
-# ---------------------------------------------------------------
 
 CLUSTER_NAME="resume-builder"
 REGION="us-east-1"
@@ -35,7 +32,12 @@ eksctl delete iamserviceaccount \
   --namespace kube-system \
   --name aws-load-balancer-controller 2>/dev/null || echo "No existing service account, skipping"
 
-echo "=== Step 5: Recreate IAM service account fresh ==="
+echo "=== Ensure OIDC provider ==="
+eksctl utils associate-iam-oidc-provider \
+  --cluster $CLUSTER_NAME \
+  --approve
+
+echo "=== Step 5: Recreate IAM service account fresh ===" #IRSA setup
 eksctl create iamserviceaccount \
   --cluster $CLUSTER_NAME \
   --namespace kube-system \
@@ -51,6 +53,7 @@ kubectl get serviceaccount aws-load-balancer-controller \
 echo "=== Step 7: Install/Upgrade ALB controller via Helm ==="
 helm repo add eks https://aws.github.io/eks-charts 2>/dev/null
 helm repo update
+sleep 30
 
 # Use upgrade --install so it works for both fresh install and updates
 helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
@@ -65,6 +68,24 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 
 echo "=== Step 9: Verify everything is running ==="
 kubectl get pods -n kube-system | grep -E "aws-load-balancer|metrics-server"
+kubectl logs -n kube-system deployment/aws-load-balancer-controller
 
 echo "=== Done! Cluster is ready. ==="
-echo "Now run: kubectl apply -f infra/k8s/"
+echo "Now run: kubectl apply -f infra/K8s/"
+
+echo "=== Step 10: Apply K8s manifests ==="
+kubectl apply -f infra/K8s/namespace.yml
+kubectl apply -f infra/K8s/configmap.yml
+kubectl apply -f infra/K8s/secrets.yml
+kubectl apply -f infra/K8s/server.yml
+kubectl apply -f infra/K8s/client.yml
+kubectl apply -f infra/K8s/ingress.yml
+kubectl apply -f infra/K8s/hpa.yml
+
+echo "=== Waiting for pods to be ready ==="
+kubectl rollout status deployment/resume-server -n resume-builder --timeout=300s
+kubectl rollout status deployment/resume-client -n resume-builder --timeout=300s
+
+echo "=== ALB URL ==="
+kubectl get ingress resume-builder-ingress -n resume-builder \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'

@@ -42,13 +42,13 @@ spec:
             httpGet:
               path: /api/health
               port: 3000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /api/health
               port: 3000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 5
 ---
 # ClusterIP — backend is internal only; ALB talks to frontend,
