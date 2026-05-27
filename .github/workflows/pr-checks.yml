@@ -21,18 +21,18 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: apps/frontend/package-lock.json
+          cache-dependency-path: client/package-lock.json
 
       - name: Install dependencies
-        working-directory: apps/frontend
+        working-directory: client
         run: npm ci
 
       - name: Run ESLint
-        working-directory: apps/frontend
+        working-directory: client
         run: npm run lint
 
       - name: Build check (Vite)
-        working-directory: apps/frontend
+        working-directory: client
         env:
           VITE_BASE_URL: /
         run: npm run build
@@ -50,14 +50,14 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: apps/backend/package-lock.json
+          cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
-        working-directory: apps/backend
+        working-directory: server
         run: npm ci
 
       - name: Check for syntax errors
-        working-directory: apps/backend
+        working-directory: server
         run: node --check server.js
 
   validate-k8s:
@@ -74,7 +74,7 @@ jobs:
       - name: Validate manifests (dry-run)
         run: |
           # Validate each manifest locally without a cluster
-          for f in infra/k8s/*.yml; do
+          for f in infra/K8s/*.yml; do
             echo "Validating $f..."
             kubectl apply --dry-run=client --validate=false -f $f || true
           done
@@ -117,10 +117,10 @@ jobs:
           docker build \
             --build-arg VITE_BASE_URL=/ \
             -t resume-builder-frontend:pr-check \
-            ./apps/frontend
+            ./client
 
       - name: Build backend image
         run: |
           docker build \
             -t resume-builder-backend:pr-check \
-            ./apps/backend
+            ./server

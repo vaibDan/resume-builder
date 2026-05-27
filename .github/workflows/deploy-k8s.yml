@@ -4,7 +4,7 @@ on:
   push:
     branches: [Main]
     paths:
-      - 'infra/k8s/**'
+      - 'infra/K8s/**'
   workflow_dispatch:
 
 env:
@@ -38,35 +38,35 @@ jobs:
         run: |
           # Get list of changed k8s files in this push
           CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
-            -- 'infra/k8s/**' | tr '\n' ' ')
+            -- 'infra/K8s/**' | tr '\n' ' ')
           echo "Changed files: $CHANGED"
           echo "files=$CHANGED" >> $GITHUB_OUTPUT
 
       - name: Apply namespace (always first)
-        run: kubectl apply -f infra/k8s/namespace.yml
+        run: kubectl apply -f infra/K8s/namespace.yml
 
       - name: Apply configmap
-        run: kubectl apply -f infra/k8s/configmap.yml
+        run: kubectl apply -f infra/K8s/configmap.yml
 
       - name: Apply secrets (skip if using AWS Secrets Manager)
         # Comment out this step if you've migrated to AWS Secrets Manager
-        run: kubectl apply -f infra/k8s/secrets.yml
+        run: kubectl apply -f infra/K8s/secrets.yml
 
       - name: Apply secret provider class (AWS Secrets Manager)
         # Uncomment when AWS Secrets Manager is set up
-        # run: kubectl apply -f infra/k8s/secret-provider.yml
+        # run: kubectl apply -f infra/K8s/secret-provider.yml
         run: echo "Skipping secret-provider.yml - uncomment when AWS Secrets Manager is configured"
 
       - name: Apply deployments and services
         run: |
-          kubectl apply -f infra/k8s/server.yml
-          kubectl apply -f infra/k8s/client.yml
+          kubectl apply -f infra/K8s/server.yml
+          kubectl apply -f infra/K8s/client.yml
 
       - name: Apply ingress
-        run: kubectl apply -f infra/k8s/ingress.yml
+        run: kubectl apply -f infra/K8s/ingress.yml
 
       - name: Apply HPA
-        run: kubectl apply -f infra/k8s/hpa.yml
+        run: kubectl apply -f infra/K8s/hpa.yml
 
       - name: Wait for rollouts
         run: |

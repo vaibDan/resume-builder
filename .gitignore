@@ -83,3 +83,6 @@ secrets.yaml
 .terraform.lock.hcl
 *.tfstate
 *.tfstate.backup
+
+#act_secrets
+.secrets/

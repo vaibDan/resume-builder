@@ -4,7 +4,7 @@ on:
   push:
     branches: [Main]
     paths:
-      - 'apps/frontend/**'
+      - 'client/**'
   workflow_dispatch:   # allow manual trigger
 
 env:
@@ -45,7 +45,7 @@ jobs:
           docker build \
             --build-arg VITE_BASE_URL=/ \
             -t $IMAGE \
-            ./apps/frontend
+            ./client
 
           docker push $IMAGE
 

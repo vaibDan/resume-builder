@@ -4,7 +4,7 @@ on:
   push:
     branches: [Main]
     paths:
-      - 'apps/backend/**'
+      - 'server/**'
   workflow_dispatch:
 
 env:
@@ -42,7 +42,7 @@ jobs:
         run: |
           IMAGE=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
 
-          docker build -t $IMAGE ./apps/backend
+          docker build -t $IMAGE ./server
           docker push $IMAGE
 
           docker tag $IMAGE $ECR_REGISTRY/$ECR_REPO:latest
@@ -117,7 +117,7 @@ jobs:
             --name $CLUSTER_NAME
 
       - name: Apply configmap (in case ALLOWED_ORIGINS changed)
-        run: kubectl apply -f infra/k8s/configmap.yml
+        run: kubectl apply -f infra/K8s/configmap.yml
 
       - name: Update backend deployment image
         env:
