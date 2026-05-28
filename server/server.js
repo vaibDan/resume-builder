@@ -15,16 +15,22 @@ const PORT = process.env.PORT || 3000;
 // Database connection
 await connectDB();
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:5173", "http://localhost:3000"];
+
 app.use(cors({
-  origin: ["http://localhost", "http://localhost:80", "http://localhost:3000", "http://127.0.0.1", "http://localhost:5173"],
+  origin: allowedOrigins,
   credentials: true
 }));
+
 app.use(express.json());
 
 // User routes
-app.get("/", (req, res) => {
-  res.send("Hello from the server!");
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "API is healthy" });
 });
+
 app.use("/api/users", userRouter);
 app.use("/api/resumes", resumeRouter);
 app.use("/api/ai", aiRouter);
