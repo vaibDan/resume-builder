@@ -9,5 +9,5 @@ data:
   # Frontend talks to the backend via the internal K8s service name
   VITE_API_URL: "http://resume-server:3000"
   # ALLOWED_ORIGINS: "http://localhost:8080,http://localhost. * "
-  ALLOWED_ORIGINS: "http://k8s-resumebu-resumebu-46224ab0ad-97539410.us-east-1.elb.amazonaws.com "
+  ALLOWED_ORIGINS: "http://k8s-resumebu-resumebu-46224ab0ad-1117278171.us-east-1.elb.amazonaws.com"
   
