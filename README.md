@@ -1,374 +1,276 @@
 # Resume Builder
 
-A full-stack web application that helps users create professional resumes with multiple templates, AI-powered suggestions, and export capabilities.
+A full-stack resume builder for creating, importing, editing, previewing, and sharing professional resumes. The app includes authenticated resume management, multiple templates, AI-assisted content enhancement, PDF resume import, profile image uploads, Docker support, and Kubernetes/Terraform deployment assets.
 
-## 🌟 Features
+![Resume Builder Architecture](./docs/resume_architecture.png)
 
-- **Multiple Resume Templates**: Choose from Modern, Classic, Minimal, and Minimal Image templates
-- **AI-Powered Assistance**: Get intelligent suggestions for professional summaries and content using OpenAI
-- **PDF Parsing**: Import and parse existing resumes from PDF files
-- **Image Upload**: Upload profile pictures with ImageKit integration
-- **User Authentication**: Secure login and registration with JWT
-- **Resume Management**: Save, edit, and manage multiple resumes
-- **Color Customization**: Personalize your resume with custom color themes
-- **Real-time Preview**: See your resume changes in real-time
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
+## Features
 
-## 🏗️ Architecture Diagram
+- **Resume editor** with personal info, summary, skills, experience, projects, education, color, and template controls.
+- **Multiple templates** including classic, modern, minimal, and minimal image layouts.
+- **AI assistance** for enhancing professional summaries and job descriptions.
+- **PDF import** that extracts resume text on the client and sends it for AI-powered structured parsing.
+- **Authenticated dashboard** for creating, editing, deleting, and listing user resumes.
+- **Public preview links** for resumes marked as public.
+- **Image uploads** through ImageKit, including optional background removal support.
+- **Deployment-ready assets** for Docker Compose, Kubernetes, EKS, ECR, and Terraform-managed AWS infrastructure.
 
-```mermaid
-graph TB
-    subgraph Client["Frontend - React Client"]
-        UI["🎨 UI Components<br/>Forms, Templates,<br/>Dashboard"]
-        Redux["📦 Redux Store<br/>Auth State<br/>Resume State"]
-        Router["🛣️ React Router<br/>Dashboard<br/>Builder<br/>Preview"]
-    end
-    
-    subgraph API["API Gateway"]
-        Axios["📡 Axios Client"]
-    end
-    
-    subgraph Server["Backend - Express Server"]
-        Auth["🔐 Auth Controller<br/>Register<br/>Login<br/>JWT Verify"]
-        Resume["📄 Resume Controller<br/>CRUD Operations<br/>Resume Management"]
-        AI["🤖 AI Controller<br/>Content Suggestions<br/>Professional Text"]
-        Middleware["⚙️ Middleware<br/>Auth Guard<br/>Validation<br/>Error Handler"]
-    end
-    
-    subgraph Services["External Services"]
-        OpenAI["🧠 OpenAI API<br/>Text Suggestions<br/>Content Enhancement"]
-        ImageKit["🖼️ ImageKit<br/>Image Upload<br/>Image Hosting"]
-    end
-    
-    subgraph Database["Database Layer"]
-        MongoDB["💾 MongoDB<br/>User Collection<br/>Resume Collection"]
-    end
-    
-    Client -->|HTTP/REST| API
-    API -->|Route Requests| Server
-    Server -->|Process Requests| Middleware
-    Middleware -->|Authenticate| Auth
-    Middleware -->|Validate| Resume
-    Middleware -->|Process| AI
-    Auth -->|Query/Update| MongoDB
-    Resume -->|Query/Update| MongoDB
-    AI -->|API Call| OpenAI
-    Resume -->|Upload/Store| ImageKit
-    
-    UI -->|Dispatch Actions| Redux
-    Redux -->|State Updates| UI
-    Router -->|Navigate| UI
-    
-    style Client fill:#e1f5ff
-    style Server fill:#fff3e0
-    style Database fill:#f3e5f5
-    style Services fill:#e8f5e9
-    style API fill:#fce4ec
-```
+## Architecture
 
-## 🛠️ Tech Stack
+The app is split into a Vite/React client, an Express API server, MongoDB persistence, and external AI/image services.
+
+| Layer | Responsibility |
+| --- | --- |
+| `client/` | React UI, routing, Redux auth state, resume forms, previews, templates, PDF text extraction, and API calls. |
+| `server/` | Express routes, JWT auth middleware, validation, resume CRUD, AI enhancement, resume parsing, and ImageKit uploads. |
+| MongoDB | Stores users and resumes through Mongoose models. |
+| OpenAI | Enhances resume content and extracts structured data from uploaded resume text. |
+| ImageKit | Stores hosted profile images used in resume templates. |
+| `infra/` | Kubernetes manifests and Terraform modules for AWS VPC, EKS, and ECR deployment. |
+
+## Tech Stack
 
 ### Frontend
-- **React** 19.1 - UI library
-- **Vite** 7.1 - Fast build tool
-- **Redux Toolkit** 2.10 - State management
-- **Tailwind CSS** 4.1 - Styling
-- **React Router** 7.9 - Client-side routing
-- **Axios** 1.13 - HTTP client
-- **React Hook Form** 7.66 - Form handling
-- **Lucide React** - Icon library
-- **React Hot Toast** 2.6 - Notifications
-- **React PDFToText** 1.3 - PDF parsing
+
+- React 19
+- Vite 7
+- React Router 7
+- Redux Toolkit
+- Tailwind CSS 4
+- Axios
+- React Hook Form
+- React PDFToText
+- Lucide React
+- React Hot Toast
 
 ### Backend
-- **Node.js** - Runtime environment
-- **Express** 5.1 - Web framework
-- **MongoDB** - NoSQL database with Mongoose 8.19
-- **JWT** - Authentication tokens
-- **Bcrypt** 6.0 - Password hashing
-- **OpenAI** 6.9 - AI integration
-- **ImageKit** 7.1 - Image management
-- **Multer** 2.0 - File uploads
-- **CORS** - Cross-origin support
+
+- Node.js
+- Express 5
+- MongoDB with Mongoose
+- JWT authentication
+- Bcrypt password hashing
+- OpenAI SDK
+- ImageKit SDK
+- Multer uploads
+- Express Joi Validation
 
 ### DevOps
-- **Docker** - Containerization
-- **Docker Compose** - Multi-container orchestration
-- **Kubernetes** - Container orchestration (k8s configuration included)
 
-## 📋 Prerequisites
+- Docker and Docker Compose
+- Nginx for the production client container
+- Kubernetes manifests under `infra/K8s/`
+- Terraform AWS infrastructure under `infra/terraform/`
 
-- Node.js (v16 or higher)
-- MongoDB (local or cloud instance)
-- Docker & Docker Compose (optional, for containerized deployment)
-- OpenAI API Key
-- ImageKit Account (for image hosting)
+## Project Structure
 
-## 🚀 Getting Started
-
-### Local Development Setup
-
-#### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd resume-builder
+```text
+resume-builder/
+├── client/
+│   ├── src/
+│   │   ├── app/                 # Redux store and auth slice
+│   │   ├── components/          # Forms, template selector, preview, home sections
+│   │   ├── components/templates # Resume template components
+│   │   ├── configs/             # Axios API client
+│   │   ├── pages/               # Home, dashboard, builder, preview, login layout
+│   │   ├── App.jsx              # Route definitions
+│   │   └── main.jsx             # React entry point
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+├── server/
+│   ├── config/                  # DB, OpenAI, ImageKit, and Multer setup
+│   ├── controllers/             # User, resume, and AI handlers
+│   ├── middleware/              # JWT auth and resume-data parsing
+│   ├── models/                  # User and Resume Mongoose schemas
+│   ├── routes/                  # API route modules
+│   ├── validations/             # Resume request validation schemas
+│   ├── Dockerfile
+│   └── server.js                # Express app entry point
+├── infra/
+│   ├── K8s/                     # Kubernetes and EKS deployment manifests
+│   └── terraform/               # AWS VPC, EKS, and ECR modules
+├── scripts/                     # Cluster setup and audit helpers
+├── docs/                        # Extra architecture notes/assets
+├── docker-compose.yml
+├── resume_architecture.png
+└── README.md
 ```
 
-#### 2. Environment Configuration
+## Prerequisites
 
-Create a `.env` file in the root directory:
+- Node.js 20+ recommended
+- npm
+- MongoDB connection string
+- OpenAI API key
+- ImageKit account credentials
+- Docker and Docker Compose, optional for containerized local runs
+- AWS CLI, Terraform, kubectl, and Docker for EKS deployment
+
+## Environment Variables
+
+Create environment files before running the app locally.
+
+### `server/.env`
+
 ```env
-# MongoDB
-MONGO_DB_URI=mongodb://localhost:27017/resume-builder
-# Or use Atlas: mongodb+srv://username:password@cluster.mongodb.net/resume-builder
-
-# JWT
-JWT_SECRET=your_jwt_secret_key
-
-# OpenAI
-OPENAI_API_KEY=your_openai_api_key
-
-# ImageKit
-IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key
-IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key
-IMAGEKIT_URL_ENDPOINT=your_imagekit_url_endpoint
-
-# Server
-NODE_ENV=development
 PORT=3000
+NODE_ENV=development
+MONGO_DB_URI=mongodb://localhost:27017
+JWT_SECRET=replace-with-a-strong-secret
+OPENAI_API_KEY=replace-with-your-openai-key
+OPENAI_MODEL=gpt-4o-mini
+IMAGEKIT_PUBLIC_KEY=replace-with-imagekit-public-key
+IMAGEKIT_PRIVATE_KEY=replace-with-imagekit-private-key
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your-account
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
-#### 3. Install Dependencies
+### `client/.env`
 
-**Backend:**
+```env
+VITE_BASE_URL=http://localhost:3000
+```
+
+For Docker Compose, keep shared values in a root `.env` file because `docker-compose.yml` reads them from the project root.
+
+## Local Development
+
+Install dependencies in each app:
+
 ```bash
 cd server
 npm install
-```
 
-**Frontend:**
-```bash
-cd client
+cd ../client
 npm install
 ```
 
-#### 4. Start Development Servers
+Start the backend:
 
-**Backend (from server directory):**
 ```bash
+cd server
 npm run server
 ```
-The server runs on `http://localhost:3000`
 
-**Frontend (from client directory):**
+Start the frontend in another terminal:
+
 ```bash
+cd client
 npm run dev
 ```
-The client runs on `http://localhost:5173`
 
-### Docker Deployment
+Development URLs:
 
-#### Using Docker Compose:
+- Client: `http://localhost:5173`
+- API: `http://localhost:3000`
+- Health check: `http://localhost:3000/api/health`
+
+## Docker Compose
+
+Run both containers from the repository root:
+
 ```bash
 docker-compose up --build
 ```
 
-This will start:
-- Backend server on `http://localhost:3000`
-- Frontend on `http://localhost:80`
+Docker Compose exposes:
 
-To stop:
+- Client: `http://localhost`
+- Server: `http://localhost:3000`
+
+Stop containers:
+
 ```bash
 docker-compose down
 ```
 
-### Kubernetes Deployment
+## API Routes
 
-Deploy to Kubernetes cluster:
-```bash
-kubectl apply -f k8s/namespace.yml
-kubectl apply -f k8s/configmap.yml
-kubectl apply -f k8s/secrets.yml
-kubectl apply -f k8s/mongodb.yml
-kubectl apply -f k8s/server.yml
-kubectl apply -f k8s/client.yml
-```
+### Users
 
-## 📁 Project Structure
-
-```
-resume-builder/
-├── client/                          # React frontend
-│   ├── src/
-│   │   ├── components/              # Reusable components
-│   │   │   ├── forms/               # Form components for resume sections
-│   │   │   ├── templates/           # Resume template components
-│   │   │   └── Home/                # Landing page components
-│   │   ├── pages/                   # Page components
-│   │   │   ├── Dashboard.jsx        # User dashboard
-│   │   │   ├── ResumeBuilder.jsx    # Main resume builder
-│   │   │   └── Preview.jsx          # Resume preview
-│   │   ├── app/                     # Redux configuration
-│   │   │   └── store.js
-│   │   ├── configs/                 # API configuration
-│   │   └── main.jsx
-│   ├── Dockerfile
-│   ├── nginx.conf                   # Nginx config for production
-│   ├── vite.config.js
-│   └── package.json
-├── server/                          # Express backend
-│   ├── controllers/                 # Request handlers
-│   │   ├── aiController.js          # AI features
-│   │   ├── resumeController.js      # Resume CRUD
-│   │   └── userController.js        # User management
-│   ├── models/                      # MongoDB schemas
-│   │   ├── User.js
-│   │   └── Resume.js
-│   ├── routes/                      # API routes
-│   │   ├── aiRoutes.js
-│   │   ├── resumeRoutes.js
-│   │   └── userRouter.js
-│   ├── middleware/                  # Express middleware
-│   │   ├── authMiddleware.js        # JWT verification
-│   │   └── parseResumeData.js
-│   ├── config/                      # Configuration files
-│   │   ├── db.js                    # Database connection
-│   │   ├── ai.js                    # OpenAI setup
-│   │   ├── imageKit.js              # ImageKit setup
-│   │   └── multer.js                # File upload config
-│   ├── server.js
-│   └── package.json
-├── k8s/                             # Kubernetes manifests
-│   ├── namespace.yml
-│   ├── configmap.yml
-│   ├── secrets.yml
-│   ├── client.yml
-│   └── server.yml
-├── docker-compose.yml
-└── README.md
-```
-
-## 🔑 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/users/register` | No | Register a user and return a JWT. |
+| `POST` | `/api/users/login` | No | Login and return a JWT. |
+| `GET` | `/api/users/data` | Yes | Get the current authenticated user. |
+| `GET` | `/api/users/resumes` | Yes | List resumes for the current user. |
 
 ### Resumes
-- `GET /api/resumes` - Get user's resumes
-- `POST /api/resumes` - Create new resume
-- `GET /api/resumes/:id` - Get resume by ID
-- `PUT /api/resumes/:id` - Update resume
-- `DELETE /api/resumes/:id` - Delete resume
 
-### AI Features
-- `POST /api/ai/suggestions` - Get AI suggestions for resume content
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/resumes/create` | Yes | Create a new resume shell. |
+| `GET` | `/api/resumes/get/:resumeId` | Yes | Get one owned resume. |
+| `GET` | `/api/resumes/public/:resumeId` | No | Get one public resume. |
+| `PUT` | `/api/resumes/update` | Yes | Update resume data and optionally upload an image. |
+| `DELETE` | `/api/resumes/delete/:resumeId` | Yes | Delete one owned resume. |
 
-## 📝 Available Scripts
+### AI
+
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/ai/enhance-pro-sum` | Yes | Improve a professional summary. |
+| `POST` | `/api/ai/enhance-job-desc` | Yes | Improve job description bullets. |
+| `POST` | `/api/ai/upload-resume` | Yes | Convert extracted resume text into structured resume data. |
+
+## Available Scripts
 
 ### Client
+
 ```bash
-npm run dev       # Start development server
-npm run build     # Build for production
-npm run lint      # Run ESLint
-npm run preview   # Preview production build
+npm run dev
+npm run build
+npm run lint
+npm run preview
 ```
 
 ### Server
+
 ```bash
-npm start         # Start server
-npm run server    # Start with nodemon (auto-reload)
+npm start
+npm run server
 ```
 
-## 🔐 Security Features
+The server `test` script is currently a placeholder and exits with an error.
 
-- **JWT Authentication**: Secure token-based authentication
-- **Password Hashing**: Bcrypt for password encryption
-- **CORS Protection**: Cross-origin request handling
-- **Input Validation**: JOI schema validation
-- **Environment Variables**: Sensitive data in .env file
+## Deployment
 
-## 🎨 Resume Templates
+### Kubernetes
 
-1. **Modern Template** - Contemporary design with accent colors
-2. **Classic Template** - Professional and clean layout
-3. **Minimal Template** - Simple and elegant design
-4. **Minimal Image Template** - Minimal design with profile image
+Kubernetes manifests live in `infra/K8s/`. A typical apply flow is:
 
-## 🚧 Troubleshooting
-
-### MongoDB Connection Issues
-- Ensure MongoDB service is running
-- Check `MONGO_DB_URI` in .env is correct
-- For MongoDB Atlas, whitelist your IP address
-
-### Image Upload Issues
-- Verify ImageKit credentials in .env
-- Check file size limits in multer config
-
-### AI Features Not Working
-- Verify OpenAI API key is valid
-- Check API quota and rate limits
-- Ensure proper JSON formatting in requests
-
-### Docker Build Issues
-- Clear Docker cache: `docker system prune`
-- Rebuild images: `docker-compose build --no-cache`
-
-## 📦 Building for Production
-
-### Frontend Build
 ```bash
-cd client
-npm run build
-```
-Output will be in `client/dist/`
-
-### Backend Build
-```bash
-cd server
-npm install --production
+kubectl apply -f infra/K8s/namespace.yml
+kubectl apply -f infra/K8s/configmap.yml
+kubectl apply -f infra/K8s/secrets.yml
+kubectl apply -f infra/K8s/server.yml
+kubectl apply -f infra/K8s/client.yml
+kubectl apply -f infra/K8s/ingress.yml
+kubectl apply -f infra/K8s/hpa.yml
 ```
 
-## 🤝 Contributing
+See `infra/K8s/README.md` for the EKS deployment walkthrough.
 
-1. Create a feature branch
-2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
+### Terraform
 
-## 📄 License
+Terraform modules live in `infra/terraform/` and provision AWS infrastructure such as VPC, EKS, and ECR:
 
-This project is licensed under the ISC License.
+```bash
+cd infra/terraform
+terraform init
+terraform plan
+terraform apply
+```
 
-## 🆘 Support
+## Troubleshooting
 
-For issues and questions:
-- Check existing issues in the repository
-- Create a new issue with detailed description
-- Include error messages and logs
+- **MongoDB connection fails:** confirm `MONGO_DB_URI` is set; the server appends the `resume-builder-cluster` database name when connecting.
+- **AI routes fail:** confirm both `OPENAI_API_KEY` and `OPENAI_MODEL` are configured.
+- **Image upload fails:** confirm all ImageKit environment variables are valid and restart the server after changing them.
+- **CORS blocks requests:** add the client origin to `ALLOWED_ORIGINS`.
+- **Docker frontend cannot reach API:** ensure `VITE_BASE_URL` matches the API path expected by the deployed Nginx/API setup.
 
-## 🔄 Deployment Checklist
+## License
 
-- [ ] Update environment variables
-- [ ] Set up MongoDB (cloud or local)
-- [ ] Configure OpenAI API key
-- [ ] Set up ImageKit account
-- [ ] Build frontend: `npm run build`
-- [ ] Start backend server
-- [ ] Test all functionality
-- [ ] Monitor logs for errors
-
-## 📚 Additional Resources
-
-- [Vite Documentation](https://vitejs.dev/)
-- [React Documentation](https://react.dev/)
-- [Express.js Guide](https://expressjs.com/)
-- [MongoDB Documentation](https://docs.mongodb.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Redux Toolkit](https://redux-toolkit.js.org/)
-
----
-
-**Last Updated**: March 2026
+This project uses the ISC license from `server/package.json`.
