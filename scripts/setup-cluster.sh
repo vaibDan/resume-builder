@@ -74,13 +74,13 @@ echo "=== Done! Cluster is ready. ==="
 echo "Now run: kubectl apply -f infra/K8s/"
 
 echo "=== Step 10: Apply K8s manifests ==="
-kubectl apply -f infra/K8s/namespace.yml
-kubectl apply -f infra/K8s/configmap.yml
-kubectl apply -f infra/K8s/secrets.yml
-kubectl apply -f infra/K8s/server.yml
-kubectl apply -f infra/K8s/client.yml
-kubectl apply -f infra/K8s/ingress.yml
-kubectl apply -f infra/K8s/hpa.yml
+kubectl apply -f ./infra/K8s/namespace.yml
+kubectl apply -f ./infra/K8s/configmap.yml
+kubectl apply -f ./infra/K8s/secrets.yml
+kubectl apply -f ./infra/K8s/server.yml
+kubectl apply -f ./infra/K8s/client.yml
+kubectl apply -f ./infra/K8s/ingress.yml
+kubectl apply -f ./infra/K8s/hpa.yml
 
 echo "=== Waiting for pods to be ready ==="
 kubectl rollout status deployment/resume-server -n resume-builder --timeout=300s
