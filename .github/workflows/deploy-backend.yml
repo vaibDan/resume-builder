@@ -1,10 +1,10 @@
 name: Deploy Backend
 
 on:
-  # push:
-  #   branches: [Main]
-  #   paths:
-  #     - 'server/**'
+  push:
+    branches: [Main]
+    paths:
+      - 'server/**'
   workflow_dispatch:
 
 env:

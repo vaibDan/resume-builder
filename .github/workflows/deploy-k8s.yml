@@ -1,10 +1,10 @@
 name: Deploy K8s Manifests
 
 on:
-  # push:
-  #   branches: [Main]
-  #   paths:
-  #     - 'infra/K8s/**'
+  push:
+    branches: [Main]
+    paths:
+      - 'infra/K8s/**'
   workflow_dispatch:
 
 env:
